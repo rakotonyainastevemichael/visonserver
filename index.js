@@ -13,11 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 // 🔗 Connexion à Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ubkzspjdkjdlvuomlduz.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOi...'; // ta clé anonyme
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY; // optionnel si tu veux plus de privilèges
-const N8N_WEBHOOK = process.env.N8N_WEBHOOK_URL; // ex: https://n8n.example/webhook/assistant
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // optionnel si tu veux utiliser OpenAI directement
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY || SUPABASE_KEY);
 
