@@ -1,5 +1,3 @@
-// /home/steve/stage/N8n_mail/server/index.js
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -16,7 +14,7 @@ app.use(express.json());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
+const N8N_WEBHOOK = process.env.N8N_WEBHOOK;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY || SUPABASE_KEY);
 
@@ -25,7 +23,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 // ========================================================
-// 📨 ROUTES EXISTANTES POUR LES MAILS
+//  ROUTES EXISTANTES POUR LES MAILS
 // ========================================================
 
 // ✅ Récupérer les mails
@@ -50,7 +48,7 @@ app.post('/mails', async (req, res) => {
 });
 
 // ========================================================
-// 🤖 NOUVELLE ROUTE : ASSISTANT IA
+//  NOUVELLE ROUTE : ASSISTANT IA
 // ========================================================
 
 app.post('/assistant/message', async (req, res) => {
@@ -80,7 +78,6 @@ app.post('/assistant/message', async (req, res) => {
       context.push('Aucun contact trouvé.');
     }
 
-    // Données envoyées à n8n
     const payload = {
       userId,
       userName,
@@ -91,7 +88,6 @@ app.post('/assistant/message', async (req, res) => {
     let reply = 'Je n’ai pas de réponse pour le moment.';
 
     if (N8N_WEBHOOK) {
-      // 🔄 Envoi à n8n
       const n8nRes = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +101,6 @@ app.post('/assistant/message', async (req, res) => {
       const json = await n8nRes.json();
       reply = json.reply || reply;
     } else if (OPENAI_API_KEY) {
-      // 💬 Appel direct à OpenAI (optionnel)
       const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -126,10 +121,31 @@ app.post('/assistant/message', async (req, res) => {
       return res.status(500).json({ error: 'Aucun N8N_WEBHOOK_URL ou OPENAI_API_KEY défini.' });
     }
 
-    // ✅ Réponse finale
     res.json({ reply });
   } catch (err) {
     console.error('Erreur assistant:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ========================================================
+//  NOUVELLE ROUTE : WEBHOOK EMAIL CLOUDMAILIN
+// ========================================================
+
+app.post("/webhook/email", async (req, res) => {
+  try {
+    console.log("📩 Email reçu :", req.body);
+
+    // --- Optionnel : Enregistrer automatiquement l'email dans Supabase ---
+    // await supabase.from("mails").insert([{
+    //   sujet: req.body.headers.subject,
+    //   message: req.body.text,
+    //   from: req.body.envelope.from
+    // }]);
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Erreur webhook email :", err);
     res.status(500).json({ error: err.message });
   }
 });
